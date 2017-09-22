@@ -1,0 +1,20 @@
+package: go-docker-driver
+import:
+- package: github.com/docker/docker
+  version: ^17.5.0-ce-rc3
+  subpackages:
+  - api/types
+  - api/types/network
+  - client
+- package: github.com/op/go-logging
+  version: ^1.0.0
+- package: github.com/openbaton/go-openbaton
+  subpackages:
+  - catalogue
+  - pluginsdk
+  - sdk
+testImport:
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert
