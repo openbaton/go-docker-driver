@@ -1,0 +1,3 @@
+type = "docker"
+endpoint = "docker"
+workers = 5
