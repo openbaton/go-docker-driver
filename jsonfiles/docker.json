@@ -1,0 +1,16 @@
+{
+  "name": "vim-instance",
+  "authUrl": "unix:///var/run/docker.sock",
+  "tenant": "1.32",
+  "username": "admin",
+  "password": "openbaton",
+  "securityGroups": [
+    "default"
+  ],
+  "type": "docker",
+  "location": {
+    "name": "Berlin",
+    "latitude": "52.525876",
+    "longitude": "13.314400"
+  }
+}
