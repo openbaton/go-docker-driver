@@ -11,6 +11,7 @@ import (
 	"github.com/openbaton/go-openbaton/sdk"
 	"github.com/openbaton/go-openbaton/catalogue"
 	network2 "github.com/docker/docker/api/types/network"
+	"net/http"
 )
 
 type HandlerPluginImpl struct {
@@ -35,7 +36,19 @@ func (h *HandlerPluginImpl) getClient(instance *catalogue.VIMInstance) (*client.
 	}
 
 	if _, ok := h.cl[instance.AuthURL]; !ok {
-		cli, err := client.NewClient(instance.AuthURL, instance.Tenant, nil, nil)
+		var cli *client.Client
+		var err error
+		if strings.HasPrefix(instance.AuthURL, "unix:") {
+			cli, err = client.NewClient(instance.AuthURL, instance.Tenant, nil, nil)
+		} else {
+			http_client := &http.Client{
+				Transport: &http.Transport{
+					//TLSClientConfig: tlsc,
+				},
+				CheckRedirect: client.CheckRedirect,
+			}
+			cli, err = client.NewClient(instance.AuthURL, instance.Tenant, http_client, nil)
+		}
 		if err != nil {
 			panic(err)
 		}
@@ -66,12 +79,12 @@ func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, net
 	}
 	ipamConfig := make([]network2.IPAMConfig, 1)
 	ipamConfig[0].Subnet = network.Subnets[0].CIDR
-	resp,err := cl.NetworkCreate(h.ctx, network.Name, types.NetworkCreate{
+	resp, err := cl.NetworkCreate(h.ctx, network.Name, types.NetworkCreate{
 		IPAM: &network2.IPAM{
 			Config: ipamConfig,
 		},
 	})
-	if err != nil{
+	if err != nil {
 		h.logger.Errorf("Error creating network: %v", err)
 		return nil, err
 	}
