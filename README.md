@@ -3,32 +3,82 @@
   Copyright © 2015-2016 [Open Baton](http://openbaton.org). 
   Licensed under [Apache v2 License](http://www.apache.org/licenses/LICENSE-2.0).
 
-# Test plugin for Vim Driver interface
-This plugin imitates the behaviour of a real vim-driver plugin and offers in this way the possibility to test the NFVO without an actual VIM (for instance Openstack). 
+# VIM Driver for Docker
 
-It works with [dummy][dummy-vnfm-amqp] implementations of the VNFM. 
+This Vim Driver is able together with the [Docker VNFM](https://github.com/openbaton/go-docker-vnfm) to deploy NS on top of a Docker engine.
 
-# How to install the Test plugin
+Both VNFM and VIM Driver are necessary in order to be able to deploy NS over Docker   
 
-If you follow the documentation and use the bootstrap script to install Open Baton the Test plugin will already be present.
+# How to install the Docker VIM Driver
 
-If you installed Open Baton from source code and cloned the git repositories to your computer you will have to add the Test plugin to the NFVO by hand. 
-It is recommended to download the stable version of the plugin from [here][get-openbaton-org] and copy it into the folder *{nfvoRootDir}/plugins/vim-drivers*. 
-Afterwards you will have to restart the NFVO.  
-Alternatively you can build it by yourself by cloning the Test plugin's git repository, changing into the projects root directory and 
+If you follow the documentation and use the bootstrap script to install Open Baton, the procedure will ask the user if he wants to install the Docker Vim Driver.
+
+## Requirements
+
+the go compiler has to be installed, please follow the go documentation on how to [download](https://golang.org/dl/) it.
+
+## Build the Vim Driver
+
+If you installed Open Baton from source code and cloned the git repositories to your computer you will have to add the Docker VNFM to the NFVO by hand.  
+You can build it by yourself by cloning the Docker Vim Driver's git repository as follows:
 executing 
 
 ```bash
-  ./gradlew build
+git clone git@github.com:openbaton/go-docker-driver.git
+cd go-docker-driver
+cd main
+go build -o docker-driver
 ```
 
-Afterwards you will find the jar file in the folder *build/libs*.  
-Copy it into the folder *{nfvoRootDir}/plugins/vim-drivers* and restart the NFVO.
+Afterwards you will find the binary file in the _main_ folder.  
+Just run it as
 
-# How to use the Test plugin
+```bash
+./docker-driver -conf config.toml -level DEBUG
+``` 
 
-To use the Test plugin you have to register a Vim Instance with the *type* field set to value *test* and use this Vim Instance for deploying your network service. 
-Additionally you should use a [dummy][dummy-vnfm-amqp] implementation of a VNFM. 
+where the config.toml looks like:
+```toml
+type        = "docker"
+workers     = 5
+username    = "openbaton-manager-user"
+password    = "openbaton"
+logLevel    = "DEBUG"
+brokerIp    = "localhost"
+brokerPort  = 5672
+```
+
+or as:
+```bash
+./docker-driver
+``` 
+and the default values will be used
+
+# How to use the Docker VIM Driver
+
+In order to upload a VimInstance using the docker driver, you need to upload a Vim Instance as follows:
+
+```json
+{
+  "name": "vim-instance",
+  "authUrl": "unix:///var/run/docker.sock",
+  "tenant": "1.32",
+  "username": "admin",
+  "password": "openbaton",
+  "type": "docker",
+  "location": {
+    "name": "Berlin",
+    "latitude": "52.525876",
+    "longitude": "13.314400"
+  }
+}
+``` 
+
+* **authUrl** either you pass the unix socket, in this case will use the socket running locally to the vim driver or the host connection string for remote execution
+* **tenant** in the tenant you can specify the api version used by the chosen docker engine
+* **type** is docker
+ 
+after uploading this Vim Instance, you should be able to see all images and networks in the PoP page of the NFVO dashbaord
 
 # Issue tracker
 

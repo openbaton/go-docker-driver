@@ -12,6 +12,9 @@ import (
 	"github.com/openbaton/go-openbaton/catalogue"
 	network2 "github.com/docker/docker/api/types/network"
 	"net/http"
+	"time"
+	"io"
+	"os"
 )
 
 type HandlerPluginImpl struct {
@@ -66,7 +69,68 @@ func (h HandlerPluginImpl) AddImage(vimInstance *catalogue.VIMInstance, image *c
 	return image, nil
 }
 func (h HandlerPluginImpl) AddImageFromURL(vimInstance *catalogue.VIMInstance, image *catalogue.NFVImage, imageURL string) (*catalogue.NFVImage, error) {
+	cl, err := h.getClient(vimInstance)
+	if err != nil {
+		h.logger.Errorf("Error while getting client: %v", err)
+		return nil, err
+	}
+	h.logger.Noticef("Trying to pull image: %v", imageURL)
+	out, err := cl.ImagePull(h.ctx, imageURL, types.ImagePullOptions{
+		All: false,
+	})
+
+	if err != nil {
+		h.logger.Errorf("Not able to pull image %s: %v", imageURL, err)
+		return nil, err
+	}
+
+	io.Copy(os.Stdout, out)
+	defer out.Close()
+
+	img, err := getImagesByName(cl, h.ctx, imageURL)
+
+	if len(img) == 1 {
+		image.ExtID = img[0].ID
+		image.Name = img[0].RepoTags[0]
+		image.Status = "ACTIVE"
+		image.MinCPU = "0"
+		image.MinDiskSpace = 0
+		image.MinRAM = 0
+		image.Created = catalogue.NewDateWithTime(time.Now())
+	}
+
 	return image, nil
+}
+
+func getImagesByName(cl *client.Client, ctx context.Context, imageName string) ([]types.ImageSummary, error) {
+	//var args filters.Args
+	//args = filters.NewArgs(filters.KeyValuePair{
+	//	Key:   "repotag",
+	//	Value: imageName,
+	//})
+	imgs, err := cl.ImageList(ctx, types.ImageListOptions{})
+	res := make([]types.ImageSummary, 0)
+	if err != nil {
+		return nil, err
+	}
+	for _, img := range imgs {
+		if stringInSlice(imageName, img.RepoTags) {
+			res = append(res, img)
+		}
+	}
+	if len(res) == 0 {
+		return nil, errors.New(fmt.Sprintf("Image with name %s not found", imageName))
+	}
+	return res, nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if strings.Contains(b, a) {
+			return true
+		}
+	}
+	return false
 }
 func (h HandlerPluginImpl) CopyImage(vimInstance *catalogue.VIMInstance, image *catalogue.NFVImage, imageFile []byte) (*catalogue.NFVImage, error) {
 	return image, nil
