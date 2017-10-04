@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/openbaton/go-openbaton/catalogue"
-	"github.com/docker/docker/api/types"
+	"docker.io/go-docker/api/types"
 	"fmt"
 )
 

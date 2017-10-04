@@ -9,8 +9,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
+	"docker.io/go-docker/api/types"
+	client "docker.io/go-docker"
 )
 
 var log *logging.Logger = sdk.GetLogger("docker_test", "DEBUG")

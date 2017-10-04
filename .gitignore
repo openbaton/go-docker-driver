@@ -66,3 +66,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 /go-docker-driver
+/vendor/
+/Gopkg.lock
