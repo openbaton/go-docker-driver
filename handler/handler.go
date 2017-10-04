@@ -56,8 +56,8 @@ func (h *HandlerPluginImpl) getClient(instance *catalogue.VIMInstance) (*client.
 			panic(err)
 		}
 		h.cl[instance.AuthURL] = cli
-
 	}
+
 	return h.cl[instance.AuthURL], nil
 
 }
@@ -124,17 +124,10 @@ func getImagesByName(cl *client.Client, ctx context.Context, imageName string) (
 	return res, nil
 }
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if strings.Contains(b, a) {
-			return true
-		}
-	}
-	return false
-}
 func (h HandlerPluginImpl) CopyImage(vimInstance *catalogue.VIMInstance, image *catalogue.NFVImage, imageFile []byte) (*catalogue.NFVImage, error) {
 	return image, nil
 }
+
 func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, network *catalogue.Network) (*catalogue.Network, error) {
 	cl, err := h.getClient(vimInstance)
 	if err != nil {
@@ -186,8 +179,8 @@ func (h HandlerPluginImpl) LaunchInstanceAndWait(vimInstance *catalogue.VIMInsta
 	return srv, nil
 }
 func (h HandlerPluginImpl) LaunchInstanceAndWaitWithIPs(vimInstance *catalogue.VIMInstance, hostname, image, extID, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, s string, floatingIps map[string]string, keys []*catalogue.Key) (*catalogue.Server, error) {
-	srv := &catalogue.Server{}
-	return srv, nil
+
+	return h.LaunchInstanceAndWait(vimInstance, hostname, image, extID, keyPair, network, securityGroups, s)
 }
 func (h HandlerPluginImpl) ListFlavours(vimInstance *catalogue.VIMInstance) ([]*catalogue.DeploymentFlavour, error) {
 	_, err := h.getClient(vimInstance)

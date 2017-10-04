@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/openbaton/go-openbaton/sdk"
 	"github.com/openbaton/go-openbaton/pluginsdk"
-	"go-docker-driver/handler"
+	"github.com/openbaton/go-docker-driver/handler"
 )
 
 func main() {

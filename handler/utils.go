@@ -4,6 +4,7 @@ import (
 	"github.com/openbaton/go-openbaton/catalogue"
 	"docker.io/go-docker/api/types"
 	"fmt"
+	"strings"
 )
 
 func GetImage(img types.ImageSummary) (*catalogue.NFVImage, error) {
@@ -77,4 +78,13 @@ func GetNetworkCreate(name, cidr string, response types.NetworkCreateResponse) (
 		External: true,
 		Name:     name,
 	}, nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if strings.Contains(b, a) {
+			return true
+		}
+	}
+	return false
 }
