@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/openbaton/go-openbaton/sdk"
 	"github.com/openbaton/go-openbaton/pluginsdk"
+	"go-docker-driver/handler"
 )
 
 func main() {
@@ -12,8 +13,8 @@ func main() {
 	var level = flag.String("level", "INFO", "The Log Level of the Docker Vim Driver")
 	flag.Parse()
 
-	h := &HandlerPluginImpl{
-		logger: sdk.GetLogger("docker-plugin", *level),
+	h := &handler.HandlerPluginImpl{
+		Logger: sdk.GetLogger("docker-plugin", *level),
 	}
 	pluginsdk.Start(*configFile, h, "docker")
 }

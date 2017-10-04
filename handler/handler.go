@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"fmt"
@@ -18,14 +18,14 @@ import (
 )
 
 type HandlerPluginImpl struct {
-	logger *logging.Logger
+	Logger *logging.Logger
 	ctx    context.Context
 	cl     map[string]*client.Client
 }
 
 func NewHandlerPlugin() (*HandlerPluginImpl) {
 	return &HandlerPluginImpl{
-		logger: sdk.GetLogger("HandlerPlugin", "DEBUG"),
+		Logger: sdk.GetLogger("HandlerPlugin", "DEBUG"),
 	}
 }
 
@@ -71,16 +71,16 @@ func (h HandlerPluginImpl) AddImage(vimInstance *catalogue.VIMInstance, image *c
 func (h HandlerPluginImpl) AddImageFromURL(vimInstance *catalogue.VIMInstance, image *catalogue.NFVImage, imageURL string) (*catalogue.NFVImage, error) {
 	cl, err := h.getClient(vimInstance)
 	if err != nil {
-		h.logger.Errorf("Error while getting client: %v", err)
+		h.Logger.Errorf("Error while getting client: %v", err)
 		return nil, err
 	}
-	h.logger.Noticef("Trying to pull image: %v", imageURL)
+	h.Logger.Noticef("Trying to pull image: %v", imageURL)
 	out, err := cl.ImagePull(h.ctx, imageURL, types.ImagePullOptions{
 		All: false,
 	})
 
 	if err != nil {
-		h.logger.Errorf("Not able to pull image %s: %v", imageURL, err)
+		h.Logger.Errorf("Not able to pull image %s: %v", imageURL, err)
 		return nil, err
 	}
 
@@ -138,7 +138,7 @@ func (h HandlerPluginImpl) CopyImage(vimInstance *catalogue.VIMInstance, image *
 func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, network *catalogue.Network) (*catalogue.Network, error) {
 	cl, err := h.getClient(vimInstance)
 	if err != nil {
-		h.logger.Errorf("Error getting the client: %v", err)
+		h.Logger.Errorf("Error getting the client: %v", err)
 		return nil, err
 	}
 	ipamConfig := make([]network2.IPAMConfig, 1)
@@ -149,7 +149,7 @@ func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, net
 		},
 	})
 	if err != nil {
-		h.logger.Errorf("Error creating network: %v", err)
+		h.Logger.Errorf("Error creating network: %v", err)
 		return nil, err
 	}
 	net, err := GetNetworkCreate(network.Subnets[0].CIDR, network.Name, resp)
@@ -192,7 +192,7 @@ func (h HandlerPluginImpl) LaunchInstanceAndWaitWithIPs(vimInstance *catalogue.V
 func (h HandlerPluginImpl) ListFlavours(vimInstance *catalogue.VIMInstance) ([]*catalogue.DeploymentFlavour, error) {
 	_, err := h.getClient(vimInstance)
 	if err != nil {
-		h.logger.Errorf("Error getting client: %v", err)
+		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
 	}
 
@@ -211,13 +211,13 @@ func (h HandlerPluginImpl) ListImages(vimInstance *catalogue.VIMInstance) ([]*ca
 
 	cl, err := h.getClient(vimInstance)
 	if err != nil {
-		h.logger.Errorf("Error getting client: %v", err)
+		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
 	}
 	opt := types.ImageListOptions{}
 	images, err := cl.ImageList(h.ctx, opt)
 	if err != nil {
-		h.logger.Errorf("Error listing images: %v", err)
+		h.Logger.Errorf("Error listing images: %v", err)
 		return nil, err
 	}
 
@@ -226,7 +226,7 @@ func (h HandlerPluginImpl) ListImages(vimInstance *catalogue.VIMInstance) ([]*ca
 	for index, img := range images {
 		nfvImg, err := GetImage(img)
 		if err != nil {
-			h.logger.Errorf("Error translating image: %v", err)
+			h.Logger.Errorf("Error translating image: %v", err)
 			return nil, err
 		}
 		res[index] = nfvImg
@@ -236,13 +236,13 @@ func (h HandlerPluginImpl) ListImages(vimInstance *catalogue.VIMInstance) ([]*ca
 func (h HandlerPluginImpl) ListNetworks(vimInstance *catalogue.VIMInstance) ([]*catalogue.Network, error) {
 	cl, err := h.getClient(vimInstance)
 	if err != nil {
-		h.logger.Errorf("Error getting client: %v", err)
+		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
 	}
 	opt := types.NetworkListOptions{}
 	networksDock, err := cl.NetworkList(h.ctx, opt)
 	if err != nil {
-		h.logger.Errorf("Error listing networks: %v", err)
+		h.Logger.Errorf("Error listing networks: %v", err)
 		return nil, err
 	}
 
@@ -251,7 +251,7 @@ func (h HandlerPluginImpl) ListNetworks(vimInstance *catalogue.VIMInstance) ([]*
 	for index, netDock := range networksDock {
 		nfvImg, err := GetNetwork(netDock)
 		if err != nil {
-			h.logger.Errorf("Error translating image: %v", err)
+			h.Logger.Errorf("Error translating image: %v", err)
 			return nil, err
 		}
 		res[index] = nfvImg
@@ -262,13 +262,13 @@ func (h HandlerPluginImpl) ListNetworks(vimInstance *catalogue.VIMInstance) ([]*
 func (h HandlerPluginImpl) ListServer(vimInstance *catalogue.VIMInstance) ([]*catalogue.Server, error) {
 	cl, err := h.getClient(vimInstance)
 	if err != nil {
-		h.logger.Errorf("Error getting client: %v", err)
+		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
 	}
 	opt := types.ContainerListOptions{}
 	containers, err := cl.ContainerList(h.ctx, opt)
 	if err != nil {
-		h.logger.Errorf("Error listing networks: %v", err)
+		h.Logger.Errorf("Error listing networks: %v", err)
 		return nil, err
 	}
 
@@ -277,12 +277,12 @@ func (h HandlerPluginImpl) ListServer(vimInstance *catalogue.VIMInstance) ([]*ca
 	for index, container := range containers {
 		img, err := h.getImageById(container.Image, cl)
 		if err != nil {
-			h.logger.Errorf("Error while retrieving the image by id")
+			h.Logger.Errorf("Error while retrieving the image by id")
 			return nil, err
 		}
 		server, err := GetContainer(container, img)
 		if err != nil {
-			h.logger.Errorf("Error translating image: %v", err)
+			h.Logger.Errorf("Error translating image: %v", err)
 			return nil, err
 		}
 		res[index] = server
@@ -298,7 +298,7 @@ func (h HandlerPluginImpl) getImageById(i string, cl *client.Client) (*catalogue
 	//}
 	images, err := cl.ImageList(h.ctx, types.ImageListOptions{})
 	if err != nil {
-		h.logger.Errorf("Error listing images: %v", err)
+		h.Logger.Errorf("Error listing images: %v", err)
 		return nil, err
 	}
 	for _, img := range images {

@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"github.com/openbaton/go-openbaton/catalogue"

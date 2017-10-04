@@ -5,7 +5,7 @@
 *.dll
 *.so
 *.dylib
-main/main
+handler/main
 
 # Test binary, build with `go test -c`
 *.test
@@ -65,3 +65,4 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+/go-docker-driver
