@@ -69,7 +69,7 @@ func TestDockerListContainers(t *testing.T) {
 
 func TestListImage(t *testing.T) {
 
-	hand := NewHandlerPlugin()
+	hand := NewHandlerPlugin(false)
 	vimInstance := getVimInstance()
 	imgs, err := hand.ListImages(vimInstance)
 	assert.Nil(t, err)

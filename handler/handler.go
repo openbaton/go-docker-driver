@@ -6,51 +6,73 @@ import (
 	"context"
 	"strings"
 	"github.com/op/go-logging"
-	client "docker.io/go-docker"
+	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"github.com/openbaton/go-openbaton/sdk"
 	"github.com/openbaton/go-openbaton/catalogue"
-	network2 "docker.io/go-docker/api/types/network"
+	dockerNetwork "docker.io/go-docker/api/types/network"
 	"net/http"
 	"time"
 	"io"
 	"os"
+	"github.com/docker/go-connections/tlsconfig"
+	"path/filepath"
+	"docker.io/go-docker/api"
+	"crypto/tls"
 )
 
 type HandlerPluginImpl struct {
 	Logger *logging.Logger
 	ctx    context.Context
-	cl     map[string]*client.Client
+	cl     map[string]*docker.Client
+	Swarm  bool
+	Tls  bool
 }
 
-func NewHandlerPlugin() (*HandlerPluginImpl) {
+func NewHandlerPlugin(swarm bool) (*HandlerPluginImpl) {
 	return &HandlerPluginImpl{
 		Logger: sdk.GetLogger("HandlerPlugin", "DEBUG"),
+		Swarm:swarm,
 	}
 }
 
-func (h *HandlerPluginImpl) getClient(instance *catalogue.VIMInstance) (*client.Client, error) {
+const certDirectory string = "/Users/lto/.docker/machine/machines/myvm1/"
+
+func (h *HandlerPluginImpl) getClient(instance *catalogue.VIMInstance) (*docker.Client, error) {
 	if h.ctx == nil {
 		h.ctx = context.Background()
 	}
 
 	if h.cl == nil {
-		h.cl = make(map[string]*client.Client)
+		h.cl = make(map[string]*docker.Client)
 	}
 
 	if _, ok := h.cl[instance.AuthURL]; !ok {
-		var cli *client.Client
+		var cli *docker.Client
 		var err error
 		if strings.HasPrefix(instance.AuthURL, "unix:") {
-			cli, err = client.NewClient(instance.AuthURL, instance.Tenant, nil, nil)
+			cli, err = docker.NewClient(instance.AuthURL, instance.Tenant, nil, nil)
 		} else {
+			var tlsc *tls.Config
+			if h.Tls {
+				options := tlsconfig.Options{
+					CAFile:             filepath.Join(certDirectory, "ca.pem"),
+					CertFile:           filepath.Join(certDirectory, "cert.pem"),
+					KeyFile:            filepath.Join(certDirectory, "key.pem"),
+					InsecureSkipVerify: false,
+				}
+				tlsc, err = tlsconfig.Client(options)
+				if err != nil {
+					return nil, err
+				}
+			}
 			http_client := &http.Client{
 				Transport: &http.Transport{
-					//TLSClientConfig: tlsc,
+					TLSClientConfig: tlsc,
 				},
-				CheckRedirect: client.CheckRedirect,
+				CheckRedirect: docker.CheckRedirect,
 			}
-			cli, err = client.NewClient(instance.AuthURL, instance.Tenant, http_client, nil)
+			cli, err = docker.NewClient(instance.AuthURL, api.DefaultVersion, http_client, nil)
 		}
 		if err != nil {
 			panic(err)
@@ -102,7 +124,7 @@ func (h HandlerPluginImpl) AddImageFromURL(vimInstance *catalogue.VIMInstance, i
 	return image, nil
 }
 
-func getImagesByName(cl *client.Client, ctx context.Context, imageName string) ([]types.ImageSummary, error) {
+func getImagesByName(cl *docker.Client, ctx context.Context, imageName string) ([]types.ImageSummary, error) {
 	//var args filters.Args
 	//args = filters.NewArgs(filters.KeyValuePair{
 	//	Key:   "repotag",
@@ -134,12 +156,19 @@ func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, net
 		h.Logger.Errorf("Error getting the client: %v", err)
 		return nil, err
 	}
-	ipamConfig := make([]network2.IPAMConfig, 1)
+	ipamConfig := make([]dockerNetwork.IPAMConfig, 1)
 	ipamConfig[0].Subnet = network.Subnets[0].CIDR
+	var driver string
+	if h.Swarm {
+		driver = "overlay"
+	} else {
+		driver = "bridge"
+	}
 	resp, err := cl.NetworkCreate(h.ctx, network.Name, types.NetworkCreate{
-		IPAM: &network2.IPAM{
+		IPAM: &dockerNetwork.IPAM{
 			Config: ipamConfig,
 		},
+		Driver: driver,
 	})
 	if err != nil {
 		h.Logger.Errorf("Error creating network: %v", err)
@@ -174,13 +203,16 @@ func (h HandlerPluginImpl) LaunchInstance(vimInstance *catalogue.VIMInstance, na
 	srv := &catalogue.Server{}
 	return srv, nil
 }
-func (h HandlerPluginImpl) LaunchInstanceAndWait(vimInstance *catalogue.VIMInstance, hostname, image, extID, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, s string) (*catalogue.Server, error) {
+func (h HandlerPluginImpl) LaunchInstanceAndWait(vimInstance *catalogue.VIMInstance, hostname, image, flavorKey, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, userdata string) (*catalogue.Server, error) {
+	if userdata != "" {
+		h.Logger.Warning("User-data is IGNORED, why did you pass it?!")
+	}
 	srv := &catalogue.Server{}
 	return srv, nil
 }
-func (h HandlerPluginImpl) LaunchInstanceAndWaitWithIPs(vimInstance *catalogue.VIMInstance, hostname, image, extID, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, s string, floatingIps map[string]string, keys []*catalogue.Key) (*catalogue.Server, error) {
+func (h HandlerPluginImpl) LaunchInstanceAndWaitWithIPs(vimInstance *catalogue.VIMInstance, hostname, image, extID, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, userdata string, floatingIps map[string]string, keys []*catalogue.Key) (*catalogue.Server, error) {
 
-	return h.LaunchInstanceAndWait(vimInstance, hostname, image, extID, keyPair, network, securityGroups, s)
+	return h.LaunchInstanceAndWait(vimInstance, hostname, image, extID, keyPair, network, securityGroups, userdata)
 }
 func (h HandlerPluginImpl) ListFlavours(vimInstance *catalogue.VIMInstance) ([]*catalogue.DeploymentFlavour, error) {
 	_, err := h.getClient(vimInstance)
@@ -282,7 +314,7 @@ func (h HandlerPluginImpl) ListServer(vimInstance *catalogue.VIMInstance) ([]*ca
 	}
 	return res, nil
 }
-func (h HandlerPluginImpl) getImageById(i string, cl *client.Client) (*catalogue.NFVImage, error) {
+func (h HandlerPluginImpl) getImageById(i string, cl *docker.Client) (*catalogue.NFVImage, error) {
 	//filter := filters.NewArgs()
 	//filter.Add("id", i)
 	//f := filters.Args{}
