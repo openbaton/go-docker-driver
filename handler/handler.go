@@ -22,21 +22,20 @@ import (
 )
 
 type HandlerPluginImpl struct {
-	Logger *logging.Logger
-	ctx    context.Context
-	cl     map[string]*docker.Client
-	Swarm  bool
-	Tls  bool
+	Logger        *logging.Logger
+	ctx           context.Context
+	cl            map[string]*docker.Client
+	Swarm         bool
+	Tls           bool
+	CertDirectory string
 }
 
 func NewHandlerPlugin(swarm bool) (*HandlerPluginImpl) {
 	return &HandlerPluginImpl{
 		Logger: sdk.GetLogger("HandlerPlugin", "DEBUG"),
-		Swarm:swarm,
+		Swarm:  swarm,
 	}
 }
-
-const certDirectory string = "/Users/lto/.docker/machine/machines/myvm1/"
 
 func (h *HandlerPluginImpl) getClient(instance *catalogue.VIMInstance) (*docker.Client, error) {
 	if h.ctx == nil {
@@ -56,9 +55,9 @@ func (h *HandlerPluginImpl) getClient(instance *catalogue.VIMInstance) (*docker.
 			var tlsc *tls.Config
 			if h.Tls {
 				options := tlsconfig.Options{
-					CAFile:             filepath.Join(certDirectory, "ca.pem"),
-					CertFile:           filepath.Join(certDirectory, "cert.pem"),
-					KeyFile:            filepath.Join(certDirectory, "key.pem"),
+					CAFile:             filepath.Join(h.CertDirectory, "ca.pem"),
+					CertFile:           filepath.Join(h.CertDirectory, "cert.pem"),
+					KeyFile:            filepath.Join(h.CertDirectory, "key.pem"),
 					InsecureSkipVerify: false,
 				}
 				tlsc, err = tlsconfig.Client(options)
