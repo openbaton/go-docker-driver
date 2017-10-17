@@ -33,10 +33,21 @@ func GetNetwork(networkResource types.NetworkResource) (*catalogue.Network, erro
 }
 func GetSubnets(resource types.NetworkResource) ([]*catalogue.Subnet, error) {
 	subnets := make([]*catalogue.Subnet, 1)
+	var cidr, gatewayIp string
+	for _, cfg := range resource.IPAM.Config {
+		if cfg.Subnet != "" {
+			cidr = cfg.Subnet
+			gatewayIp = cfg.Gateway
+			break
+		}
+	}
+
 	subnets[0] = &catalogue.Subnet{
 		ExtID:     resource.ID,
 		Name:      fmt.Sprintf("%s_subnet", resource.Name),
 		NetworkID: resource.ID,
+		CIDR:      cidr,
+		GatewayIP: gatewayIp,
 	}
 	return subnets, nil
 }

@@ -11,6 +11,7 @@ import (
 
 	"docker.io/go-docker/api/types"
 	client "docker.io/go-docker"
+	"net"
 )
 
 var log *logging.Logger = sdk.GetLogger("docker_test", "DEBUG")
@@ -85,3 +86,7 @@ func getVimInstance() *catalogue.VIMInstance {
 		AuthURL: "unix:///var/run/docker.sock",
 	}
 }
+
+//func TestParseSubnet(t *testing.T) {
+//	ip, ipNet, _ := net.ParseCIDR("192.168.0.0/24")
+//}

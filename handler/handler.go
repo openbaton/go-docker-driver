@@ -19,6 +19,9 @@ import (
 	"path/filepath"
 	"docker.io/go-docker/api"
 	"crypto/tls"
+	_ "net"
+	"runtime/debug"
+	"net"
 )
 
 type HandlerPluginImpl struct {
@@ -149,6 +152,15 @@ func (h HandlerPluginImpl) CopyImage(vimInstance *catalogue.VIMInstance, image *
 	return image, nil
 }
 
+func inc(ip net.IP) {
+	for j := len(ip) - 1; j >= 0; j-- {
+		ip[j]++
+		if ip[j] > 0 {
+			break
+		}
+	}
+}
+
 func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, network *catalogue.Network) (*catalogue.Network, error) {
 	cl, err := h.getClient(vimInstance)
 	if err != nil {
@@ -157,12 +169,19 @@ func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, net
 	}
 	ipamConfig := make([]dockerNetwork.IPAMConfig, 1)
 	ipamConfig[0].Subnet = network.Subnets[0].CIDR
+	ip, _, err := net.ParseCIDR(network.Subnets[0].CIDR)
+	if err != nil {
+		debug.PrintStack()
+		return nil, err
+	}
+	inc(ip)
 	var driver string
 	if h.Swarm {
 		driver = "overlay"
 	} else {
 		driver = "bridge"
 	}
+	ipamConfig[0].Gateway = ip.String()
 	resp, err := cl.NetworkCreate(h.ctx, network.Name, types.NetworkCreate{
 		IPAM: &dockerNetwork.IPAM{
 			Config: ipamConfig,
@@ -173,11 +192,11 @@ func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.VIMInstance, net
 		h.Logger.Errorf("Error creating network: %v", err)
 		return nil, err
 	}
-	net, err := GetNetworkCreate(network.Subnets[0].CIDR, network.Name, resp)
+	dockNet, err := GetNetworkCreate(network.Subnets[0].CIDR, network.Name, resp)
 	if err != nil {
 		return nil, err
 	}
-	return &net, nil
+	return &dockNet, nil
 }
 
 func (h HandlerPluginImpl) CreateSubnet(vimInstance *catalogue.VIMInstance, createdNetwork *catalogue.Network, subnet *catalogue.Subnet) (*catalogue.Subnet, error) {
