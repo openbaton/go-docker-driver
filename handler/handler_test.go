@@ -8,10 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"context"
 	"fmt"
-
 	"docker.io/go-docker/api/types"
 	client "docker.io/go-docker"
-	"net"
 )
 
 var log *logging.Logger = sdk.GetLogger("docker_test", "DEBUG")
@@ -55,15 +53,15 @@ func TestDockerListContainers(t *testing.T) {
 		fmt.Printf("%v\n", container.Names)
 		fmt.Printf("%v\n", container.HostConfig)
 		fmt.Printf("%v\n", container.Labels)
-		for _, net := range       container.NetworkSettings.Networks{
-			fmt.Printf("\t%v\n", net.IPAddress)
-			fmt.Printf("\t%v\n", net.NetworkID)
-			fmt.Printf("\t%v\n", net.EndpointID)
-			fmt.Printf("\t%v\n", net.Gateway)
-			fmt.Printf("\t%v\n", net.MacAddress)
-			fmt.Printf("\t%v\n", net.Links)
-			fmt.Printf("\t%v\n", net.Aliases)
-			fmt.Printf("\t%v\n", net.DriverOpts)
+		for _, endpointSettings := range       container.NetworkSettings.Networks{
+			fmt.Printf("\t%v\n", endpointSettings.IPAddress)
+			fmt.Printf("\t%v\n", endpointSettings.NetworkID)
+			fmt.Printf("\t%v\n", endpointSettings.EndpointID)
+			fmt.Printf("\t%v\n", endpointSettings.Gateway)
+			fmt.Printf("\t%v\n", endpointSettings.MacAddress)
+			fmt.Printf("\t%v\n", endpointSettings.Links)
+			fmt.Printf("\t%v\n", endpointSettings.Aliases)
+			fmt.Printf("\t%v\n", endpointSettings.DriverOpts)
 		}
 	}
 }

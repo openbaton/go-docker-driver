@@ -1,3 +1,4 @@
 type = "docker"
 endpoint = "docker"
 workers = 5
+brokerIp = "localhost"
