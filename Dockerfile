@@ -1,5 +1,3 @@
-# Start from a Debian image with the latest version of Go installed
-# and a workspace (GOPATH) configured at /go.
 # build stage
 FROM golang:alpine AS build-env
 RUN apk add --update curl git && rm -rf /var/cache/apk/*
