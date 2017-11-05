@@ -1,27 +1,28 @@
 package handler
 
 import (
-	"fmt"
-	"errors"
 	"context"
-	"strings"
-	"github.com/op/go-logging"
-	"docker.io/go-docker"
-	"docker.io/go-docker/api/types"
-	"github.com/openbaton/go-openbaton/sdk"
-	"github.com/openbaton/go-openbaton/catalogue"
-	dockerNetwork "docker.io/go-docker/api/types/network"
-	"net/http"
-	"time"
-	"io"
-	"os"
-	"github.com/docker/go-connections/tlsconfig"
-	"path/filepath"
-	"docker.io/go-docker/api"
 	"crypto/tls"
-	_ "net"
-	"runtime/debug"
+	"errors"
+	"fmt"
+	"io"
 	"net"
+	_ "net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"runtime/debug"
+	"strings"
+	"time"
+
+	"docker.io/go-docker"
+	"docker.io/go-docker/api"
+	"docker.io/go-docker/api/types"
+	dockerNetwork "docker.io/go-docker/api/types/network"
+	"github.com/docker/go-connections/tlsconfig"
+	"github.com/op/go-logging"
+	"github.com/openbaton/go-openbaton/catalogue"
+	"github.com/openbaton/go-openbaton/sdk"
 )
 
 type HandlerPluginImpl struct {
@@ -33,7 +34,7 @@ type HandlerPluginImpl struct {
 	CertDirectory string
 }
 
-func NewHandlerPlugin(swarm bool) (*HandlerPluginImpl) {
+func NewHandlerPlugin(swarm bool) *HandlerPluginImpl {
 	return &HandlerPluginImpl{
 		Logger: sdk.GetLogger("HandlerPlugin", "DEBUG"),
 		Swarm:  swarm,
@@ -315,20 +316,21 @@ func (h HandlerPluginImpl) ListServer(vimInstance *catalogue.VIMInstance) ([]*ca
 		return nil, err
 	}
 
-	res := make([]*catalogue.Server, len(containers))
+	res := make([]*catalogue.Server, 0)
 
-	for index, container := range containers {
+	for _, container := range containers {
 		img, err := h.getImageById(container.Image, cl)
 		if err != nil {
 			h.Logger.Errorf("Error while retrieving the image by id")
-			return nil, err
+			continue
+			// return nil, err
 		}
 		server, err := GetContainer(container, img)
 		if err != nil {
 			h.Logger.Errorf("Error translating image: %v", err)
 			return nil, err
 		}
-		res[index] = server
+		res = append(res, server)
 	}
 	return res, nil
 }
