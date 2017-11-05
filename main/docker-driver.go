@@ -16,6 +16,7 @@ func main() {
 	var tls = flag.Bool("tls", false, "use tls or not")
 
 	var typ = flag.String("type", "docker", "The type of the Docker Vim Driver")
+	var name = flag.String("name", "docker", "The name of the Docker Vim Driver")
 	var username = flag.String("username", "openbaton-manager-user", "The registering user")
 	var password = flag.String("password", "openbaton", "The registering password")
 	var brokerIp = flag.String("ip", "localhost", "The Broker Ip")
@@ -32,8 +33,8 @@ func main() {
 		CertDirectory: *certDirectory,
 	}
 	if *configFile != "" {
-		pluginsdk.Start(*configFile, h, "docker")
+		pluginsdk.Start(*configFile, h, *name)
 	} else {
-		pluginsdk.StartWithConfig(*typ, *username, *password, *level, *brokerIp, *workers, *brokerPort, h, "docker")
+		pluginsdk.StartWithConfig(*typ, *username, *password, *level, *brokerIp, *workers, *brokerPort, h, *name)
 	}
 }
