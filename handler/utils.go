@@ -75,6 +75,32 @@ func GetContainer(container types.Container, image *catalogue.NFVImage) (*catalo
 	}, nil
 }
 
+func GetContainerWithImgName(container types.Container, imageName string) (*catalogue.Server, error) {
+	ips := make(map[string][]string)
+	fips := make(map[string]string)
+	for _, net := range container.NetworkSettings.Networks {
+		ips[net.NetworkID[0:6]] = []string{net.IPAddress}
+		fips[net.NetworkID[0:6]] = net.IPAddress
+	}
+	return &catalogue.Server{
+		Status:         container.Status,
+		ExtID:          container.ID,
+		ExtendedStatus: container.Status,
+		InstanceName:   container.Names[0],
+		Name:           container.Names[0],
+		HostName:       container.Names[0],
+		Flavour: &catalogue.DeploymentFlavour{
+			FlavourKey: "m1.small",
+		},
+		Image:       &catalogue.NFVImage{
+			Name:   imageName,
+			Status: catalogue.Active,
+		},
+		IPs:         ips,
+		FloatingIPs: fips,
+	}, nil
+}
+
 func GetNetworkCreate(name, cidr string, response types.NetworkCreateResponse) (catalogue.Network, error) {
 	subs := make([]*catalogue.Subnet, 1)
 	subs[0] = &catalogue.Subnet{

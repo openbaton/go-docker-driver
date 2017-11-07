@@ -320,12 +320,13 @@ func (h HandlerPluginImpl) ListServer(vimInstance *catalogue.VIMInstance) ([]*ca
 
 	for _, container := range containers {
 		img, err := h.getImageById(container.Image, cl)
+		var server *catalogue.Server
 		if err != nil {
 			h.Logger.Errorf("Error while retrieving the image by id")
-			continue
+			server, err = GetContainerWithImgName(container, container.Image)
 			// return nil, err
 		}
-		server, err := GetContainer(container, img)
+		server, err = GetContainer(container, img)
 		if err != nil {
 			h.Logger.Errorf("Error translating image: %v", err)
 			return nil, err
@@ -334,6 +335,7 @@ func (h HandlerPluginImpl) ListServer(vimInstance *catalogue.VIMInstance) ([]*ca
 	}
 	return res, nil
 }
+
 func (h HandlerPluginImpl) getImageById(i string, cl *docker.Client) (*catalogue.NFVImage, error) {
 	//filter := filters.NewArgs()
 	//filter.Add("id", i)
