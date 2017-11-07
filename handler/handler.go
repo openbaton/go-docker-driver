@@ -114,8 +114,15 @@ func (h HandlerPluginImpl) AddImageFromURL(vimInstance *catalogue.VIMInstance, i
 
 	img, err := getImagesByName(cl, h.ctx, imageURL)
 
+	h.Logger.Debugf("New Tags are: %v", img[0].RepoTags)
 	if len(img) == 1 {
-		image.ExtID = img[0].ID
+		var extId string
+		if strings.Contains(img[0].ID, ":") {
+			extId = strings.Split(img[0].ID, ":")[1]
+		} else {
+			extId = img[0].ID
+		}
+		image.ExtID = extId
 		image.Name = img[0].RepoTags[0]
 		image.Status = "ACTIVE"
 		image.MinCPU = "0"
@@ -124,7 +131,7 @@ func (h HandlerPluginImpl) AddImageFromURL(vimInstance *catalogue.VIMInstance, i
 		image.Created = catalogue.NewDateWithTime(time.Now())
 	}
 
-	return image, nil
+	return image, err
 }
 
 func getImagesByName(cl *docker.Client, ctx context.Context, imageName string) ([]types.ImageSummary, error) {
