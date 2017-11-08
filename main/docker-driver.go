@@ -13,7 +13,7 @@ func main() {
 	var level = flag.String("level", "INFO", "The Log Level of the Docker Vim Driver")
 	var certDirectory = flag.String("cert", "/Users/usr/.docker/machine/machines/myvm1/", "The certificate directory")
 	var swarm = flag.Bool("swarm", false, "if the plugin works against a swarm docker")
-	var tls = flag.Bool("tls", false, "use tls or not")
+	var tsl = flag.Bool("tsl", false, "use tsl or not")
 
 	var typ = flag.String("type", "docker", "The type of the Docker Vim Driver")
 	var name = flag.String("name", "docker", "The name of the Docker Vim Driver")
@@ -29,7 +29,7 @@ func main() {
 	h := &handler.HandlerPluginImpl{
 		Logger:        logger,
 		Swarm:         *swarm,
-		Tls:           *tls,
+		Tsl:           *tsl,
 		CertDirectory: *certDirectory,
 	}
 	if *configFile != "" {

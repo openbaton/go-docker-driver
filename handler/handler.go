@@ -30,7 +30,7 @@ type HandlerPluginImpl struct {
 	ctx           context.Context
 	cl            map[string]*docker.Client
 	Swarm         bool
-	Tls           bool
+	Tsl           bool
 	CertDirectory string
 }
 
@@ -57,7 +57,7 @@ func (h *HandlerPluginImpl) getClient(instance *catalogue.VIMInstance) (*docker.
 			cli, err = docker.NewClient(instance.AuthURL, instance.Tenant, nil, nil)
 		} else {
 			var tlsc *tls.Config
-			if h.Tls {
+			if h.Tsl {
 				options := tlsconfig.Options{
 					CAFile:             filepath.Join(h.CertDirectory, "ca.pem"),
 					CertFile:           filepath.Join(h.CertDirectory, "cert.pem"),
