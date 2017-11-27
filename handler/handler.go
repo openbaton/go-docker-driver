@@ -24,6 +24,7 @@ import (
 	"github.com/openbaton/go-openbaton/catalogue"
 	"github.com/openbaton/go-openbaton/sdk"
 	"io/ioutil"
+	"github.com/openbaton/go-openbaton/pluginsdk"
 )
 
 var dockerSecDir string = "docker_sec"
@@ -109,14 +110,19 @@ func (h *HandlerPluginImpl) getClient(instance *catalogue.DockerVimInstance) (*d
 
 }
 
-func (h HandlerPluginImpl) AddFlavour(vimInstance *catalogue.DockerVimInstance, deploymentFlavour *catalogue.DeploymentFlavour) (*catalogue.DeploymentFlavour, error) {
+func (h HandlerPluginImpl) AddFlavour(vimInstance interface{}, deploymentFlavour *catalogue.DeploymentFlavour) (*catalogue.DeploymentFlavour, error) {
 	return deploymentFlavour, nil
 }
-func (h HandlerPluginImpl) AddImage(vimInstance *catalogue.DockerVimInstance, image *catalogue.DockerImage, imageFile []byte) (*catalogue.DockerImage, error) {
+func (h HandlerPluginImpl) AddImage(vimInstance interface{}, image *catalogue.DockerImage, imageFile []byte) (*catalogue.DockerImage, error) {
 	return image, nil
 }
-func (h HandlerPluginImpl) AddImageFromURL(vimInstance *catalogue.DockerVimInstance, image *catalogue.DockerImage, imageURL string) (*catalogue.DockerImage, error) {
-	cl, err := h.getClient(vimInstance)
+func (h HandlerPluginImpl) AddImageFromURL(vimInstance interface{}, image *catalogue.DockerImage, imageURL string) (*catalogue.DockerImage, error) {
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting Docker Vim Instance: %v", err)
+		return nil, err
+	}
+	cl, err := h.getClient(dockerVimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error while getting client: %v", err)
 		return nil, err
@@ -174,7 +180,7 @@ func getImagesByName(cl *docker.Client, ctx context.Context, imageName string) (
 	return res, nil
 }
 
-func (h HandlerPluginImpl) CopyImage(vimInstance *catalogue.DockerVimInstance, image *catalogue.DockerImage, imageFile []byte) (*catalogue.DockerImage, error) {
+func (h HandlerPluginImpl) CopyImage(vimInstance interface{}, image *catalogue.DockerImage, imageFile []byte) (*catalogue.DockerImage, error) {
 	return image, nil
 }
 
@@ -187,8 +193,13 @@ func inc(ip net.IP) {
 	}
 }
 
-func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.DockerVimInstance, network *catalogue.DockerNetwork) (*catalogue.DockerNetwork, error) {
-	cl, err := h.getClient(vimInstance)
+func (h HandlerPluginImpl) CreateNetwork(vimInstance interface{}, network *catalogue.DockerNetwork) (*catalogue.DockerNetwork, error) {
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting Docker Vim Instance: %v", err)
+		return nil, err
+	}
+	cl, err := h.getClient(dockerVimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error getting the client: %v", err)
 		return nil, err
@@ -230,41 +241,46 @@ func (h HandlerPluginImpl) CreateNetwork(vimInstance *catalogue.DockerVimInstanc
 	return obNet, nil
 }
 
-func (h HandlerPluginImpl) CreateSubnet(vimInstance *catalogue.DockerVimInstance, createdNetwork *catalogue.DockerNetwork, subnet *catalogue.Subnet) (*catalogue.Subnet, error) {
+func (h HandlerPluginImpl) CreateSubnet(vimInstance interface{}, createdNetwork *catalogue.DockerNetwork, subnet *catalogue.Subnet) (*catalogue.Subnet, error) {
 	return subnet, nil
 }
-func (h HandlerPluginImpl) DeleteFlavour(vimInstance *catalogue.DockerVimInstance, extID string) (bool, error) {
+func (h HandlerPluginImpl) DeleteFlavour(vimInstance interface{}, extID string) (bool, error) {
 	return true, nil
 }
-func (h HandlerPluginImpl) DeleteImage(vimInstance *catalogue.DockerVimInstance, image *catalogue.DockerImage) (bool, error) {
+func (h HandlerPluginImpl) DeleteImage(vimInstance interface{}, image *catalogue.DockerImage) (bool, error) {
 	return true, nil
 }
-func (h HandlerPluginImpl) DeleteNetwork(vimInstance *catalogue.DockerVimInstance, extID string) (bool, error) {
+func (h HandlerPluginImpl) DeleteNetwork(vimInstance interface{}, extID string) (bool, error) {
 	return true, nil
 }
-func (h HandlerPluginImpl) DeleteServerByIDAndWait(vimInstance *catalogue.DockerVimInstance, id string) error {
+func (h HandlerPluginImpl) DeleteServerByIDAndWait(vimInstance interface{}, id string) error {
 	return nil
 }
-func (h HandlerPluginImpl) DeleteSubnet(vimInstance *catalogue.DockerVimInstance, existingSubnetExtID string) (bool, error) {
+func (h HandlerPluginImpl) DeleteSubnet(vimInstance interface{}, existingSubnetExtID string) (bool, error) {
 	return true, nil
 }
-func (h HandlerPluginImpl) LaunchInstance(vimInstance *catalogue.DockerVimInstance, name, image, Flavour, keypair string, network []*catalogue.VNFDConnectionPoint, secGroup []string, userData string) (*catalogue.Server, error) {
+func (h HandlerPluginImpl) LaunchInstance(vimInstance interface{}, name, image, Flavour, keypair string, network []*catalogue.VNFDConnectionPoint, secGroup []string, userData string) (*catalogue.Server, error) {
 	srv := &catalogue.Server{}
 	return srv, nil
 }
-func (h HandlerPluginImpl) LaunchInstanceAndWait(vimInstance *catalogue.DockerVimInstance, hostname, image, flavorKey, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, userdata string) (*catalogue.Server, error) {
+func (h HandlerPluginImpl) LaunchInstanceAndWait(vimInstance interface{}, hostname, image, flavorKey, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, userdata string) (*catalogue.Server, error) {
 	if userdata != "" {
 		h.Logger.Warning("User-data is IGNORED, why did you pass it?!")
 	}
 	srv := &catalogue.Server{}
 	return srv, nil
 }
-func (h HandlerPluginImpl) LaunchInstanceAndWaitWithIPs(vimInstance *catalogue.DockerVimInstance, hostname, image, extID, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, userdata string, floatingIps map[string]string, keys []*catalogue.Key) (*catalogue.Server, error) {
+func (h HandlerPluginImpl) LaunchInstanceAndWaitWithIPs(vimInstance interface{}, hostname, image, extID, keyPair string, network []*catalogue.VNFDConnectionPoint, securityGroups []string, userdata string, floatingIps map[string]string, keys []*catalogue.Key) (*catalogue.Server, error) {
 
 	return h.LaunchInstanceAndWait(vimInstance, hostname, image, extID, keyPair, network, securityGroups, userdata)
 }
-func (h HandlerPluginImpl) ListFlavours(vimInstance *catalogue.DockerVimInstance) ([]*catalogue.DeploymentFlavour, error) {
-	_, err := h.getClient(vimInstance)
+func (h HandlerPluginImpl) ListFlavours(vimInstance interface{}) ([]*catalogue.DeploymentFlavour, error) {
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting Docker Vim Instance: %v", err)
+		return nil, err
+	}
+	_, err = h.getClient(dockerVimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
@@ -281,9 +297,13 @@ func (h HandlerPluginImpl) ListFlavours(vimInstance *catalogue.DockerVimInstance
 	}
 	return res, nil
 }
-func (h HandlerPluginImpl) ListImages(vimInstance *catalogue.DockerVimInstance) ([]*catalogue.DockerImage, error) {
-
-	cl, err := h.getClient(vimInstance)
+func (h HandlerPluginImpl) ListImages(vimInstance interface{}) ([]*catalogue.DockerImage, error) {
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting Docker Vim Instance: %v", err)
+		return nil, err
+	}
+	cl, err := h.getClient(dockerVimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
@@ -307,8 +327,13 @@ func (h HandlerPluginImpl) ListImages(vimInstance *catalogue.DockerVimInstance) 
 	}
 	return res, nil
 }
-func (h HandlerPluginImpl) ListNetworks(vimInstance *catalogue.DockerVimInstance) ([]*catalogue.DockerNetwork, error) {
-	cl, err := h.getClient(vimInstance)
+func (h HandlerPluginImpl) ListNetworks(vimInstance interface{}) ([]*catalogue.DockerNetwork, error) {
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting Docker Vim Instance: %v", err)
+		return nil, err
+	}
+	cl, err := h.getClient(dockerVimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
@@ -333,16 +358,21 @@ func (h HandlerPluginImpl) ListNetworks(vimInstance *catalogue.DockerVimInstance
 	return res, nil
 }
 
-func (h HandlerPluginImpl) Refresh(vimInstance *catalogue.DockerVimInstance) (*catalogue.DockerVimInstance, error) {
+func (h HandlerPluginImpl) Refresh(vimInstance interface{}) (interface{}, error) {
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting Docker Vim Instance: %v", err)
+		return nil, err
+	}
 	//Images
 	imgs, err := h.ListImages(vimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error listing images: %v", err)
 		return nil, err
 	}
-	vimInstance.Images = make([]catalogue.DockerImage, len(imgs))
+	dockerVimInstance.Images = make([]catalogue.DockerImage, len(imgs))
 	for i := 0; i < len(imgs); i++ {
-		vimInstance.Images[i]=*imgs[i]
+		dockerVimInstance.Images[i]=*imgs[i]
 	}
 	//Networks
 	nets, err := h.ListNetworks(vimInstance)
@@ -350,15 +380,21 @@ func (h HandlerPluginImpl) Refresh(vimInstance *catalogue.DockerVimInstance) (*c
 		h.Logger.Errorf("Error listing networks: %v", err)
 		return nil, err
 	}
-	vimInstance.Networks= make([]catalogue.DockerNetwork, len(nets))
+	dockerVimInstance.Networks= make([]catalogue.DockerNetwork, len(nets))
 	for i := 0; i < len(nets); i++ {
-		vimInstance.Networks[i]=*nets[i]
+		dockerVimInstance.Networks[i]=*nets[i]
 	}
 
 	return vimInstance, nil
 }
-func (h HandlerPluginImpl) ListServer(vimInstance *catalogue.DockerVimInstance) ([]*catalogue.Server, error) {
-	cl, err := h.getClient(vimInstance)
+
+func (h HandlerPluginImpl) ListServer(vimInstance interface{}) ([]*catalogue.Server, error) {
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting Docker Vim Instance: %v", err)
+		return nil, err
+	}
+	cl, err := h.getClient(dockerVimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error getting client: %v", err)
 		return nil, err
@@ -416,10 +452,10 @@ func (h HandlerPluginImpl) getImageById(i string, cl *docker.Client) (*catalogue
 	return nil, errors.New(fmt.Sprintf("Image with id %s not found", i))
 }
 
-func (h HandlerPluginImpl) NetworkByID(vimInstance *catalogue.DockerVimInstance, id string) (*catalogue.DockerNetwork, error) {
+func (h HandlerPluginImpl) NetworkByID(vimInstance interface{}, id string) (*catalogue.DockerNetwork, error) {
 	return nil, nil
 }
-func (h HandlerPluginImpl) Quota(vimInstance *catalogue.DockerVimInstance) (*catalogue.Quota, error) {
+func (h HandlerPluginImpl) Quota(vimInstance interface{}) (*catalogue.Quota, error) {
 	return &catalogue.Quota{
 		RAM:         100000,
 		Cores:       100000,
@@ -428,21 +464,21 @@ func (h HandlerPluginImpl) Quota(vimInstance *catalogue.DockerVimInstance) (*cat
 		Instances:   100000,
 	}, nil
 }
-func (h HandlerPluginImpl) SubnetsExtIDs(vimInstance *catalogue.DockerVimInstance, networkExtID string) ([]string, error) {
+func (h HandlerPluginImpl) SubnetsExtIDs(vimInstance interface{}, networkExtID string) ([]string, error) {
 	return nil, nil
 }
-func (h HandlerPluginImpl) Type(vimInstance *catalogue.DockerVimInstance) (string, error) {
+func (h HandlerPluginImpl) Type(vimInstance interface{}) (string, error) {
 	return "docker", nil
 }
-func (h HandlerPluginImpl) UpdateFlavour(vimInstance *catalogue.DockerVimInstance, deploymentFlavour *catalogue.DeploymentFlavour) (*catalogue.DeploymentFlavour, error) {
+func (h HandlerPluginImpl) UpdateFlavour(vimInstance interface{}, deploymentFlavour *catalogue.DeploymentFlavour) (*catalogue.DeploymentFlavour, error) {
 	return deploymentFlavour, nil
 }
-func (h HandlerPluginImpl) UpdateImage(vimInstance *catalogue.DockerVimInstance, image *catalogue.DockerImage) (*catalogue.DockerImage, error) {
+func (h HandlerPluginImpl) UpdateImage(vimInstance interface{}, image *catalogue.DockerImage) (*catalogue.DockerImage, error) {
 	return image, nil
 }
-func (h HandlerPluginImpl) UpdateNetwork(vimInstance *catalogue.DockerVimInstance, network *catalogue.DockerNetwork) (*catalogue.DockerNetwork, error) {
+func (h HandlerPluginImpl) UpdateNetwork(vimInstance interface{}, network *catalogue.DockerNetwork) (*catalogue.DockerNetwork, error) {
 	return network, nil
 }
-func (h HandlerPluginImpl) UpdateSubnet(vimInstance *catalogue.DockerVimInstance, createdNetwork *catalogue.DockerNetwork, subnet *catalogue.Subnet) (*catalogue.Subnet, error) {
+func (h HandlerPluginImpl) UpdateSubnet(vimInstance interface{}, createdNetwork *catalogue.DockerNetwork, subnet *catalogue.Subnet) (*catalogue.Subnet, error) {
 	return subnet, nil
 }
