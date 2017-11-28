@@ -77,8 +77,8 @@ func TestListImage(t *testing.T) {
 		log.Noticef("Image: %v", i)
 	}
 }
-func getVimInstance() *catalogue.VIMInstance {
-	return &catalogue.VIMInstance{
+func getVimInstance() *catalogue.BaseVimInstance {
+	return &catalogue.BaseVimInstance{
 		Tenant:  "1.32",
 		Name:    "test",
 		AuthURL: "unix:///var/run/docker.sock",

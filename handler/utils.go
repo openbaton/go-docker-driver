@@ -3,56 +3,38 @@ package handler
 import (
 	"github.com/openbaton/go-openbaton/catalogue"
 	"docker.io/go-docker/api/types"
-	"fmt"
 	"strings"
+	"os"
 )
 
-func GetImage(img types.ImageSummary) (*catalogue.NFVImage, error) {
-	var name string
-	if len(img.RepoTags) > 0 {
-		name = img.RepoTags[0]
-	} else {
-		name = img.ID
-	}
-	return &catalogue.NFVImage{
-		Name:   name,
-		ExtID:  img.ID[7:],
-		Status: catalogue.Active,
+func GetImage(img types.ImageSummary) (*catalogue.DockerImage, error) {
+	return &catalogue.DockerImage{
+		Tags: img.RepoTags,
+		BaseNfvImage: catalogue.BaseNfvImage{
+			ExtID:img.ID,
+		},
 	}, nil
 }
 
-func GetNetwork(networkResource types.NetworkResource) (*catalogue.Network, error) {
-	subnets, _ := GetSubnets(networkResource)
-	return &catalogue.Network{
-		Name:     networkResource.Name,
-		ExtID:    networkResource.ID,
-		External: false,
-		Shared:   true,
-		Subnets:  subnets,
+func GetNetwork(networkResource types.NetworkResource) (*catalogue.DockerNetwork, error) {
+	var gateway, subnet string
+	if len(networkResource.IPAM.Config) > 0{
+		gateway = networkResource.IPAM.Config[0].Gateway
+		subnet = networkResource.IPAM.Config[0].Subnet
+	}
+	return &catalogue.DockerNetwork{
+		Driver:networkResource.Driver,
+		Scope:networkResource.Scope,
+		Gateway:gateway,
+		Subnet:subnet,
+		BaseNetwork:catalogue.BaseNetwork{
+			Name:networkResource.Name,
+			ExtID:networkResource.ID,
+		},
 	}, nil
 }
-func GetSubnets(resource types.NetworkResource) ([]*catalogue.Subnet, error) {
-	subnets := make([]*catalogue.Subnet, 1)
-	var cidr, gatewayIp string
-	for _, cfg := range resource.IPAM.Config {
-		if cfg.Subnet != "" {
-			cidr = cfg.Subnet
-			gatewayIp = cfg.Gateway
-			break
-		}
-	}
 
-	subnets[0] = &catalogue.Subnet{
-		ExtID:     resource.ID,
-		Name:      fmt.Sprintf("%s_subnet", resource.Name),
-		NetworkID: resource.ID,
-		CIDR:      cidr,
-		GatewayIP: gatewayIp,
-	}
-	return subnets, nil
-}
-
-func GetContainer(container types.Container, image *catalogue.NFVImage) (*catalogue.Server, error) {
+func GetContainer(container types.Container, image *catalogue.DockerImage) (*catalogue.Server, error) {
 	ips := make(map[string][]string)
 	fips := make(map[string]string)
 	for _, net := range container.NetworkSettings.Networks {
@@ -75,13 +57,14 @@ func GetContainer(container types.Container, image *catalogue.NFVImage) (*catalo
 	}, nil
 }
 
-func GetContainerWithImgName(container types.Container, imageName string) (*catalogue.Server, error) {
+func GetContainerWithImgName(container types.Container, img types.ImageInspect) (*catalogue.Server, error) {
 	ips := make(map[string][]string)
 	fips := make(map[string]string)
 	for _, net := range container.NetworkSettings.Networks {
 		ips[net.NetworkID[0:6]] = []string{net.IPAddress}
 		fips[net.NetworkID[0:6]] = net.IPAddress
 	}
+	image, _ := GetImageFromInspect(img)
 	return &catalogue.Server{
 		Status:         container.Status,
 		ExtID:          container.ID,
@@ -92,30 +75,20 @@ func GetContainerWithImgName(container types.Container, imageName string) (*cata
 		Flavour: &catalogue.DeploymentFlavour{
 			FlavourKey: "m1.small",
 		},
-		Image:       &catalogue.NFVImage{
-			Name:   imageName,
-			Status: catalogue.Active,
-		},
+		Image:       image,
 		IPs:         ips,
 		FloatingIPs: fips,
 	}, nil
 }
-
-func GetNetworkCreate(name, cidr string, response types.NetworkCreateResponse) (catalogue.Network, error) {
-	subs := make([]*catalogue.Subnet, 1)
-	subs[0] = &catalogue.Subnet{
-		Name:      fmt.Sprintf("%s_subnet", name),
-		ExtID:     response.ID,
-		CIDR:      cidr,
-		NetworkID: response.ID,
-	}
-	return catalogue.Network{
-		ExtID:    response.ID,
-		Shared:   true,
-		External: true,
-		Name:     name,
+func GetImageFromInspect(img types.ImageInspect) (*catalogue.DockerImage, error) {
+	return &catalogue.DockerImage{
+		Tags: img.RepoTags,
+		BaseNfvImage: catalogue.BaseNfvImage{
+			ExtID:img.ID,
+		},
 	}, nil
 }
+
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
@@ -124,4 +97,11 @@ func stringInSlice(a string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func exists(path string) (bool) {
+	_, err := os.Stat(path)
+	if err == nil { return true }
+	if os.IsNotExist(err) { return false }
+	return true
 }
