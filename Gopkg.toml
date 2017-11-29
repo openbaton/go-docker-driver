@@ -30,7 +30,7 @@
   version = "1.0.0"
 
 [[constraint]]
-  branch = "master"
+  branch = "5.0"
   name = "github.com/openbaton/go-openbaton"
 
 [[constraint]]
