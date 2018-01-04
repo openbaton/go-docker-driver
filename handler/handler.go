@@ -204,25 +204,31 @@ func (h HandlerPluginImpl) CreateNetwork(vimInstance interface{}, network *catal
 		h.Logger.Errorf("Error getting the client: %v", err)
 		return nil, err
 	}
-	ipamConfig := make([]dockerNetwork.IPAMConfig, 1)
-	ipamConfig[0].Subnet = network.Subnet
-	ip, _, err := net.ParseCIDR(network.Subnet)
-	if err != nil {
-		debug.PrintStack()
-		return nil, err
-	}
-	inc(ip)
 	var driver string
 	if h.Swarm {
 		driver = "overlay"
 	} else {
 		driver = "bridge"
 	}
-	ipamConfig[0].Gateway = ip.String()
-	resp, err := cl.NetworkCreate(h.ctx, network.Name, types.NetworkCreate{
-		IPAM: &dockerNetwork.IPAM{
+
+	var ipam *dockerNetwork.IPAM
+	if network.Subnet != "" {
+		ipamConfig := make([]dockerNetwork.IPAMConfig, 1)
+		ipamConfig[0].Subnet = network.Subnet
+		ip, _, err := net.ParseCIDR(network.Subnet)
+		if err != nil {
+			debug.PrintStack()
+			return nil, err
+		}
+		inc(ip)
+		ipamConfig[0].Gateway = ip.String()
+		ipam = &dockerNetwork.IPAM{
 			Config: ipamConfig,
-		},
+		}
+	}
+
+	resp, err := cl.NetworkCreate(h.ctx, network.Name, types.NetworkCreate{
+		IPAM:   ipam,
 		Driver: driver,
 	})
 	if err != nil {
