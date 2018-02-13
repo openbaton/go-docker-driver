@@ -26,7 +26,7 @@ func main() {
 	flag.Parse()
 
 	logger := sdk.GetLogger("docker-driver", *level)
-	h := &handler.HandlerPluginImpl{
+	h := &handler.PluginImpl{
 		Logger:        logger,
 		Swarm:         *swarm,
 		Tsl:           *tsl,

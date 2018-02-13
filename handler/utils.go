@@ -5,31 +5,32 @@ import (
 	"docker.io/go-docker/api/types"
 	"strings"
 	"os"
+	"errors"
 )
 
 func GetImage(img types.ImageSummary) (*catalogue.DockerImage, error) {
 	return &catalogue.DockerImage{
 		Tags: img.RepoTags,
 		BaseNfvImage: catalogue.BaseNfvImage{
-			ExtID:img.ID,
+			ExtID: img.ID,
 		},
 	}, nil
 }
 
 func GetNetwork(networkResource types.NetworkResource) (*catalogue.DockerNetwork, error) {
 	var gateway, subnet string
-	if len(networkResource.IPAM.Config) > 0{
+	if len(networkResource.IPAM.Config) > 0 {
 		gateway = networkResource.IPAM.Config[0].Gateway
 		subnet = networkResource.IPAM.Config[0].Subnet
 	}
 	return &catalogue.DockerNetwork{
-		Driver:networkResource.Driver,
-		Scope:networkResource.Scope,
-		Gateway:gateway,
-		Subnet:subnet,
-		BaseNetwork:catalogue.BaseNetwork{
-			Name:networkResource.Name,
-			ExtID:networkResource.ID,
+		Driver:  networkResource.Driver,
+		Scope:   networkResource.Scope,
+		Gateway: gateway,
+		Subnet:  subnet,
+		BaseNetwork: catalogue.BaseNetwork{
+			Name:  networkResource.Name,
+			ExtID: networkResource.ID,
 		},
 	}, nil
 }
@@ -84,11 +85,10 @@ func GetImageFromInspect(img types.ImageInspect) (*catalogue.DockerImage, error)
 	return &catalogue.DockerImage{
 		Tags: img.RepoTags,
 		BaseNfvImage: catalogue.BaseNfvImage{
-			ExtID:img.ID,
+			ExtID: img.ID,
 		},
 	}, nil
 }
-
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
@@ -101,7 +101,30 @@ func stringInSlice(a string, list []string) bool {
 
 func exists(path string) (bool) {
 	_, err := os.Stat(path)
-	if err == nil { return true }
-	if os.IsNotExist(err) { return false }
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
 	return true
+}
+
+func getDockerImage(image catalogue.BaseImageInt) (*catalogue.DockerImage, error) {
+	switch i := image.(type) {
+
+	case *catalogue.DockerImage:
+		return i, nil
+	default:
+		return nil, errors.New("image not of type DockerImage")
+	}
+}
+
+func getDockerNet(net catalogue.BaseNetworkInt) (*catalogue.DockerNetwork, error) {
+	switch i := net.(type) {
+	case *catalogue.DockerNetwork:
+		return i, nil
+	default:
+		return nil, errors.New("image not of type DockerNetwork")
+	}
 }
