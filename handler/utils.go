@@ -6,6 +6,7 @@ import (
 	"strings"
 	"os"
 	"errors"
+	"fmt"
 )
 
 func GetImage(img types.ImageSummary) (*catalogue.DockerImage, error) {
@@ -122,9 +123,11 @@ func getDockerImage(image catalogue.BaseImageInt) (*catalogue.DockerImage, error
 
 func getDockerNet(net catalogue.BaseNetworkInt) (*catalogue.DockerNetwork, error) {
 	switch i := net.(type) {
+	case catalogue.DockerNetwork:
+		return &i, nil
 	case *catalogue.DockerNetwork:
 		return i, nil
 	default:
-		return nil, errors.New("image not of type DockerNetwork")
+		return nil, errors.New(fmt.Sprintf("network not of type DockerNetwork but [%T]", net))
 	}
 }

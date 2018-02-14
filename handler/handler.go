@@ -25,6 +25,7 @@ import (
 	"github.com/openbaton/go-openbaton/sdk"
 	"io/ioutil"
 	"github.com/openbaton/go-openbaton/pluginsdk"
+	"math/rand"
 )
 
 var dockerSecDir = "docker_sec"
@@ -205,6 +206,10 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 		return nil, err
 	}
 	dockerNet, err := getDockerNet(network)
+	if err != nil {
+		h.Logger.Errorf("Error getting the Docker Network: %v", err)
+		return nil, err
+	}
 	cl, err := h.getClient(dockerVimInstance)
 	if err != nil {
 		h.Logger.Errorf("Error getting the client: %v", err)
@@ -232,11 +237,14 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 			Config: ipamConfig,
 		}
 	}
-
-	resp, err := cl.NetworkCreate(h.ctx, dockerNet.Name, types.NetworkCreate{
+	h.Logger.Debugf("Received DockerNetwork %v", dockerNet)
+	netname := fmt.Sprintf("%s_%d", dockerNet.Name, 999-rand.Intn(800))
+	netCreateOpt := types.NetworkCreate{
 		IPAM:   ipam,
 		Driver: driver,
-	})
+	}
+	h.Logger.Debugf("Creating network [%s] with config %v", netname, netCreateOpt)
+	resp, err := cl.NetworkCreate(h.ctx, netname, netCreateOpt)
 	if err != nil {
 		h.Logger.Errorf("Error creating network: %v", err)
 		return nil, err
@@ -247,6 +255,7 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 		return nil, err
 	}
 	obNet, err := GetNetwork(dockNet)
+	h.Logger.Infof("Created ob network [%s] with ext id [%s]", obNet.Name, obNet.ExtID)
 	if err != nil {
 		return nil, err
 	}
@@ -263,6 +272,23 @@ func (h PluginImpl) DeleteImage(vimInstance interface{}, image catalogue.BaseIma
 	return true, nil
 }
 func (h PluginImpl) DeleteNetwork(vimInstance interface{}, extID string) (bool, error) {
+	h.Logger.Debugf("Deleting network [%s]", extID)
+	dockerVimInstance, err := pluginsdk.GetDockerVimInstance(vimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting docker vim instance: %v", err)
+		return false, err
+	}
+	cl, err := h.getClient(dockerVimInstance)
+	if err != nil {
+		h.Logger.Errorf("Error getting client: %v", err)
+		return false, err
+	}
+	err = cl.NetworkRemove(h.ctx, extID)
+	if err != nil {
+		h.Logger.Errorf("Error Deleting network: %v", err)
+		return false, err
+	}
+	h.Logger.Infof("Deleted network [%s]", extID)
 	return true, nil
 }
 func (h PluginImpl) DeleteServerByIDAndWait(vimInstance interface{}, id string) error {
@@ -337,7 +363,7 @@ func (h PluginImpl) ListImages(vimInstance interface{}) (catalogue.BaseImageInt,
 		}
 		res[index] = nfvImg
 	}
-	h.Logger.Info("Listed %d images", len(res))
+	h.Logger.Infof("Listed %d images", len(res))
 	return res, nil
 }
 func (h PluginImpl) ListNetworks(vimInstance interface{}) (catalogue.BaseNetworkInt, error) {
@@ -370,9 +396,9 @@ func (h PluginImpl) ListNetworks(vimInstance interface{}) (catalogue.BaseNetwork
 	}
 	h.Logger.Infof("Listed %d networks", len(res))
 	h.Logger.Debugf("Networks are %s", func() []string {
-		v := make([]string,len(res))
+		v := make([]string, len(res))
 		for i, n := range res {
-			v[i]=n.Name
+			v[i] = n.Name
 		}
 		return v
 	}())

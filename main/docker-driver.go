@@ -5,6 +5,7 @@ import (
 	"github.com/openbaton/go-openbaton/sdk"
 	"github.com/openbaton/go-openbaton/pluginsdk"
 	"github.com/openbaton/go-docker-driver/handler"
+	"github.com/openbaton/go-openbaton/catalogue"
 )
 
 func main() {
@@ -33,8 +34,8 @@ func main() {
 		CertDirectory: *certDirectory,
 	}
 	if *configFile != "" {
-		pluginsdk.Start(*configFile, h, *name)
+		pluginsdk.Start(*configFile, h, *name, catalogue.DockerNetwork{}, catalogue.DockerImage{})
 	} else {
-		pluginsdk.StartWithConfig(*typ, *username, *password, *level, *brokerIp, *workers, *brokerPort, h, *name)
+		pluginsdk.StartWithConfig(*typ, *username, *password, *level, *brokerIp, *workers, *brokerPort, h, *name, catalogue.DockerNetwork{}, catalogue.DockerImage{})
 	}
 }
