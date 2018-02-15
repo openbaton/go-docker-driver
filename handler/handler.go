@@ -237,14 +237,14 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 			Config: ipamConfig,
 		}
 	}
-	h.Logger.Debugf("Received DockerNetwork %v", dockerNet)
-	netname := fmt.Sprintf("%s_%d", dockerNet.Name, 999-rand.Intn(800))
+	h.Logger.Debugf("Received DockerNetwork %+v", dockerNet)
+	dockerNet.Name = fmt.Sprintf("%s_%d", dockerNet.Name, 9999-rand.Intn(9000))
 	netCreateOpt := types.NetworkCreate{
 		IPAM:   ipam,
 		Driver: driver,
 	}
-	h.Logger.Debugf("Creating network [%s] with config %v", netname, netCreateOpt)
-	resp, err := cl.NetworkCreate(h.ctx, netname, netCreateOpt)
+	h.Logger.Debugf("Creating network [%s] with config %v", dockerNet.Name, netCreateOpt)
+	resp, err := cl.NetworkCreate(h.ctx, dockerNet.Name, netCreateOpt)
 	if err != nil {
 		h.Logger.Errorf("Error creating network: %v", err)
 		return nil, err
