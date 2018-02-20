@@ -70,3 +70,5 @@ fabric.properties
 /go-docker-driver
 /vendor/
 /Gopkg.lock
+
+main/main
