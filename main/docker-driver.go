@@ -23,6 +23,7 @@ func main() {
 	var brokerIp = flag.String("ip", "localhost", "The Broker Ip")
 	var brokerPort = flag.Int("port", 5672, "The Broker Port")
 	var workers = flag.Int("workers", 5, "The number of workers")
+	var timeout = flag.Int("timeout", 2, "Timeout of the Dial function")
 
 	flag.Parse()
 
@@ -36,6 +37,6 @@ func main() {
 	if *configFile != "" {
 		pluginsdk.Start(*configFile, h, *name, catalogue.DockerNetwork{}, catalogue.DockerImage{})
 	} else {
-		pluginsdk.StartWithConfig(*typ, *username, *password, *level, *brokerIp, *workers, *brokerPort, h, *name, catalogue.DockerNetwork{}, catalogue.DockerImage{})
+		pluginsdk.StartWithConfig(*typ, *username, *password, *level, *brokerIp, *workers, *brokerPort, *timeout, h, *name, catalogue.DockerNetwork{}, catalogue.DockerImage{})
 	}
 }
