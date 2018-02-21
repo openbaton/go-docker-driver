@@ -10,18 +10,14 @@ import (
 	"fmt"
 	"docker.io/go-docker/api/types"
 	client "docker.io/go-docker"
+	"docker.io/go-docker/api/types/filters"
 )
 
 var log *logging.Logger = sdk.GetLogger("docker_test", "DEBUG")
 
 func TestDockerListImages(t *testing.T) {
 
-	cli, err := client.NewEnvClient()
-
-	if err != nil {
-		panic(err)
-	}
-	background := context.Background()
+	cli, background := NewClientAndBackground()
 	fmt.Println(cli.ClientVersion())
 	fmt.Println(cli.DaemonHost())
 	fmt.Println(cli.Info(background))
@@ -37,12 +33,7 @@ func TestDockerListImages(t *testing.T) {
 
 func TestDockerListContainers(t *testing.T) {
 
-	cli, err := client.NewEnvClient()
-
-	if err != nil {
-		panic(err)
-	}
-	background := context.Background()
+	cli, background := NewClientAndBackground()
 	containers, err := cli.ContainerList(background, types.ContainerListOptions{})
 	if err != nil {
 		panic(err)
@@ -53,7 +44,7 @@ func TestDockerListContainers(t *testing.T) {
 		fmt.Printf("%v\n", container.Names)
 		fmt.Printf("%v\n", container.HostConfig)
 		fmt.Printf("%v\n", container.Labels)
-		for _, endpointSettings := range       container.NetworkSettings.Networks{
+		for _, endpointSettings := range container.NetworkSettings.Networks {
 			fmt.Printf("\t%v\n", endpointSettings.IPAddress)
 			fmt.Printf("\t%v\n", endpointSettings.NetworkID)
 			fmt.Printf("\t%v\n", endpointSettings.EndpointID)
@@ -72,19 +63,43 @@ func TestListImage(t *testing.T) {
 	vimInstance := getVimInstance()
 	imgs, err := hand.ListImages(vimInstance)
 	assert.Nil(t, err)
-	log.Noticef("Found %d images", len(imgs))
-	for _, i := range imgs {
+	dImgs := imgs.([]*catalogue.DockerImage)
+	log.Noticef("Found %d images", len(dImgs))
+	for _, i := range dImgs {
 		log.Noticef("Image: %v", i)
 	}
 }
-func getVimInstance() *catalogue.BaseVimInstance {
-	return &catalogue.BaseVimInstance{
-		Tenant:  "1.32",
-		Name:    "test",
-		AuthURL: "unix:///var/run/docker.sock",
+
+
+func TestListNetworkFiltered(t *testing.T) {
+	cli, background := NewClientAndBackground()
+	keyValuePair := filters.NewArgs(filters.Arg("name", "host"))
+	nets, err := cli.NetworkList(background, types.NetworkListOptions{
+		Filters: keyValuePair,
+	})
+	if err != nil {
+		panic(err)
+	}
+	for _, n := range nets {
+		log.Noticef("Network is %+v", n)
 	}
 }
+func NewClientAndBackground() (*client.Client, context.Context) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+	background := context.Background()
+	return cli, background
+}
 
-//func TestParseSubnet(t *testing.T) {
-//	ip, ipNet, _ := net.ParseCIDR("192.168.0.0/24")
-//}
+
+func getVimInstance() *catalogue.DockerVimInstance {
+	return &catalogue.DockerVimInstance{
+		BaseVimInstance: catalogue.BaseVimInstance{
+			Name:    "TestDocker",
+			AuthURL: "unix:///var/run/docker.sock",
+			Type:    "docker",
+		},
+	}
+}

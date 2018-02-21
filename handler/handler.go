@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"github.com/openbaton/go-openbaton/pluginsdk"
 	"math/rand"
+	"docker.io/go-docker/api/types/filters"
 )
 
 var dockerSecDir = "docker_sec"
@@ -239,6 +240,16 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 	}
 	h.Logger.Debugf("Received DockerNetwork %+v", dockerNet)
 	dockerNet.Name = fmt.Sprintf("%s_%d", dockerNet.Name, 9999-rand.Intn(9000))
+	for ok, err := existsNetwork(cl, h.ctx, dockerNet.Name); ok; ok, err = existsNetwork(cl, h.ctx, dockerNet.Name) {
+
+		if err != nil {
+			h.Logger.Errorf("Not able to list network with name %s: %v", dockerNet.Name, err)
+			return nil, err
+		}
+		dockerNet.Name = fmt.Sprintf("%s_%d", strings.Split(dockerNet.Name, "_")[0], 9999-rand.Intn(9000))
+		ok, err = existsNetwork(cl, h.ctx, dockerNet.Name)
+	}
+
 	netCreateOpt := types.NetworkCreate{
 		IPAM:   ipam,
 		Driver: driver,
@@ -260,6 +271,16 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 		return nil, err
 	}
 	return obNet, nil
+}
+func existsNetwork(cl *docker.Client, ctx context.Context, name string) (bool, error) {
+	keyValuePair := filters.NewArgs(filters.Arg("name", name))
+	nets, err := cl.NetworkList(ctx, types.NetworkListOptions{
+		Filters: keyValuePair,
+	})
+	if err != nil {
+		return false, err
+	}
+	return len(nets) > 0, nil
 }
 
 func (h PluginImpl) CreateSubnet(vimInstance interface{}, createdNetwork catalogue.BaseNetworkInt, subnet *catalogue.Subnet) (*catalogue.Subnet, error) {
