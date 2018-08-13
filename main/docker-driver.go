@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/openbaton/go-openbaton/sdk"
-	"github.com/openbaton/go-openbaton/pluginsdk"
+	"os"
+
 	"github.com/openbaton/go-docker-driver/handler"
 	"github.com/openbaton/go-openbaton/catalogue"
+	"github.com/openbaton/go-openbaton/pluginsdk"
+	"github.com/openbaton/go-openbaton/sdk"
 )
 
 func main() {
@@ -20,7 +22,11 @@ func main() {
 	var name = flag.String("name", "docker", "The name of the Docker Vim Driver")
 	var username = flag.String("username", "openbaton-manager-user", "The registering user")
 	var password = flag.String("password", "openbaton", "The registering password")
-	var brokerIp = flag.String("ip", "localhost", "The Broker Ip")
+	var brokerIp = flag.String("brokerIp", "localhost", "The Broker Ip")
+	brokerIpEnv, ok := os.LookupEnv("BROKER_IP")
+	if ok {
+		brokerIp = &brokerIpEnv
+	}
 	var brokerPort = flag.Int("port", 5672, "The Broker Port")
 	var workers = flag.Int("workers", 5, "The number of workers")
 	var timeout = flag.Int("timeout", 2, "Timeout of the Dial function")
