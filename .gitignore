@@ -72,3 +72,6 @@ fabric.properties
 /Gopkg.lock
 
 main/main
+
+# binary after building the project
+main/docker-driver

@@ -1,6 +1,6 @@
   <img src="https://raw.githubusercontent.com/openbaton/openbaton.github.io/master/images/openBaton.png" width="250"/>
-  
-  Copyright © 2015-2016 [Open Baton](http://openbaton.org). 
+
+  Copyright © 2015-2016 [Open Baton](http://openbaton.org).
   Licensed under [Apache v2 License](http://www.apache.org/licenses/LICENSE-2.0).
 
 # VIM Driver for Docker
@@ -11,48 +11,38 @@ Both VNFM and VIM Driver are necessary in order to be able to deploy NS over Doc
 
 # How to install the Docker VIM Driver
 
-If you follow the documentation and use the bootstrap script to install Open Baton, the procedure will ask the user if he wants to install the Docker Vim Driver.
-
 ## Requirements
 
-the go compiler has to be installed, please follow the go documentation on how to [download](https://golang.org/dl/) it.
+- go compiler (https://golang.org/dl/)
+- dep (https://github.com/golang/dep)
 
-## Build the Vim Driver
+## Build the Docker VIM Driver
 
-If you installed Open Baton from source code and cloned the git repositories to your computer you will have to add the Docker VNFM to the NFVO by hand.  
-You can build it by yourself by cloning the Docker Vim Driver's git repository as follows:
-executing 
+Assuming that your `GOPATH` variable is set to $HOME/go (find out typing `go env`), run the following commands:
 
 ```bash
+mkdir -p ~/go/src/github.com/openbaton
+cd ~/go/src/github.com/openbaton
 git clone git@github.com:openbaton/go-docker-driver.git
 cd go-docker-driver
+dep ensure
 cd main
-go build -o docker-driver
+go build -o go-docker-driver
 ```
 
-Afterwards you will find the binary file in the _main_ folder.  
-Just run it as
+Afterwards check the usage by running:
 
 ```bash
-./docker-driver -conf config.toml -level DEBUG
-``` 
-
-where the config.toml looks like:
-```toml
-type        = "docker"
-workers     = 5
-username    = "openbaton-manager-user"
-password    = "openbaton"
-logLevel    = "DEBUG"
-brokerIp    = "localhost"
-brokerPort  = 5672
+./go-docker-driver --help
 ```
 
-or as:
+# How to start the Docker VIM Driver
+
+If you don't need special configuration, start the go-docker-driver just by running:
+
 ```bash
-./docker-driver
-``` 
-and the default values will be used
+./go-docker-driver
+```
 
 # How to use the Docker VIM Driver
 
@@ -72,12 +62,12 @@ In order to upload a VimInstance using the docker driver, you need to upload a V
     "longitude": "13.314400"
   }
 }
-``` 
+```
 
 * **authUrl** either you pass the unix socket, in this case will use the socket running locally to the vim driver or the host connection string for remote execution
 * **tenant** in the tenant you can specify the api version used by the chosen docker engine
 * **type** is docker
- 
+
 after uploading this Vim Instance, you should be able to see all images and networks in the PoP page of the NFVO dashbaord
 
 # Issue tracker
@@ -88,7 +78,7 @@ Issues and bug reports should be posted to the GitHub Issue Tracker of this proj
 
 OpenBaton is an open source project providing a comprehensive implementation of the ETSI Management and Orchestration (MANO) specification.
 
-Open Baton is a ETSI NFV MANO compliant framework. Open Baton was part of the OpenSDNCore (www.opensdncore.org) project started almost three years ago by Fraunhofer FOKUS with the objective of providing a compliant implementation of the ETSI NFV specification. 
+Open Baton is a ETSI NFV MANO compliant framework. Open Baton was part of the OpenSDNCore (www.opensdncore.org) project started almost three years ago by Fraunhofer FOKUS with the objective of providing a compliant implementation of the ETSI NFV specification.
 
 Open Baton is easily extensible. It integrates with OpenStack, and provides a plugin mechanism for supporting additional VIM types. It supports Network Service management either using a generic VNFM or interoperating with VNF-specific VNFM. It uses different mechanisms (REST or PUB/SUB) for interoperating with the VNFMs. It integrates with additional components for the runtime management of a Network Service. For instance, it provides autoscaling and fault management based on monitoring information coming from the the monitoring system available at the NFVI level.
 
