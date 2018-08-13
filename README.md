@@ -27,21 +27,21 @@ git clone git@github.com:openbaton/go-docker-driver.git
 cd go-docker-driver
 dep ensure
 cd main
-go build -o go-docker-driver
+go build -o docker-driver
 ```
 
 Afterwards check the usage by running:
 
 ```bash
-./go-docker-driver --help
+./docker-driver --help
 ```
 
 # How to start the Docker VIM Driver
 
-If you don't need special configuration, start the go-docker-driver just by running:
+If you don't need special configuration, start the docker-driver just by running:
 
 ```bash
-./go-docker-driver
+./docker-driver
 ```
 
 # How to use the Docker VIM Driver
