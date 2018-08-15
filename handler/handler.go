@@ -15,18 +15,19 @@ import (
 	"strings"
 	"time"
 
+	"io/ioutil"
+	"math/rand"
+
 	"docker.io/go-docker"
 	"docker.io/go-docker/api"
 	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/filters"
 	dockerNetwork "docker.io/go-docker/api/types/network"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/op/go-logging"
 	"github.com/openbaton/go-openbaton/catalogue"
-	"github.com/openbaton/go-openbaton/sdk"
-	"io/ioutil"
 	"github.com/openbaton/go-openbaton/pluginsdk"
-	"math/rand"
-	"docker.io/go-docker/api/types/filters"
+	"github.com/openbaton/go-openbaton/sdk"
 )
 
 var dockerSecDir = "docker_sec"
@@ -552,4 +553,8 @@ func (h PluginImpl) UpdateNetwork(vimInstance interface{}, network catalogue.Bas
 }
 func (h PluginImpl) UpdateSubnet(vimInstance interface{}, createdNetwork catalogue.BaseNetworkInt, subnet *catalogue.Subnet) (*catalogue.Subnet, error) {
 	return subnet, nil
+}
+func (h PluginImpl) RebuildServer(vimInstance interface{}, serverId string, imageId string) (*catalogue.Server, error) {
+	srv := &catalogue.Server{}
+	return srv, nil
 }
