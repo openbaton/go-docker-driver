@@ -30,12 +30,12 @@
   version = "1.0.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/openbaton/go-openbaton"
+  version = "6.0.0-RC1"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/openbaton/go-docker-driver"
+  version = "6.0.0-RC1"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
