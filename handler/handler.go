@@ -220,15 +220,15 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 	var driver string
 	if h.Swarm {
 		driver = "overlay"
-	} else if dockerNet.Metadata["driver"] != "" {
-		driver = dockerNet.Metadata["driver"]
+	} else if val, ok := dockerNet.Metadata["driver"]; ok {
+		driver = val
 	} else {
 		driver = "bridge"
 	}
 
-	var ipam *dockerNetwork.IPAM
-	if dockerNet.Metadata["ipam-driver"] != "" {
-		ipam.Driver = dockerNet.Metadata["ipam-driver"]
+	var ipam = &dockerNetwork.IPAM{}
+	if val, ok := dockerNet.Metadata["ipam-driver"]; ok {
+		ipam.Driver = val
 	}
 	if dockerNet.Subnet != "" {
 		ipamConfig := make([]dockerNetwork.IPAMConfig, 1)
@@ -240,9 +240,7 @@ func (h PluginImpl) CreateNetwork(vimInstance interface{}, network catalogue.Bas
 		}
 		inc(ip)
 		ipamConfig[0].Gateway = ip.String()
-		ipam = &dockerNetwork.IPAM{
-			Config: ipamConfig,
-		}
+		ipam.Config = ipamConfig
 	}
 	h.Logger.Debugf("Received DockerNetwork %+v", dockerNet)
 	dockerNet.Name = fmt.Sprintf("%s_%d", dockerNet.Name, 9999-rand.Intn(9000))
